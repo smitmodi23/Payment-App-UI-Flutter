@@ -58,18 +58,20 @@ class DatabaseHelper {
     return await db!.insert(ProductModel.tblProduct, productModel.toMap());
   }
 
-  Future<int> updateUser(ProductModel productModel) async {
+  Future<int> updateProduct(ProductModel productModel) async {
     Database? db = await database;
     return await db!.update(ProductModel.tblProduct, productModel.toMap(),
         where: "${ProductModel.colID}=?", whereArgs: [productModel.id]);
   }
 
-  Future<List<ProductModel>> loginUser(String selected) async {
+  Future<List<ProductModel>> getProductBill(String selected) async {
     Database? db = await database;
-    List<Map<String, dynamic>> res = await db!.rawQuery(
-        "SELECT * FROM ${ProductModel.tblProduct} WHERE ${ProductModel.colSelected} = $selected");
-    return res.isNotEmpty ? res.map((e) => ProductModel.fromMap(e)).toList() : [];
-
+    var res = await db!.query(ProductModel.tblProduct,where: "${ProductModel.colSelected} in (?)",whereArgs: ["$selected"]);
+    print(res);
+    if(res.isNotEmpty) {
+      return res.map((e) => ProductModel.fromMap(e)).toList();
+    }
+    return [];
     // if (res.isNotEmpty) {
     //   return ProductModel.fromMap(res.first);
     // }

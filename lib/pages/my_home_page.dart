@@ -17,8 +17,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-
   final ProductController productController = Get.put(ProductController());
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
@@ -32,6 +32,8 @@ class _MyHomePageState extends State<MyHomePage> {
     double h = MediaQuery.of(context).size.height;
     double w = MediaQuery.of(context).size.width;
     return Scaffold(
+      resizeToAvoidBottomInset: false,
+      key: _scaffoldKey,
       backgroundColor: AppColor.backGroundColor,
       body: Container(
         height: h,
@@ -132,7 +134,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                           textColor: Colors.white,
                                           backgroundColor: Colors.white,
                                           onTap: () {
-                                            Navigator.pop(context);
+                                            Get.back();
                                           }),
                                       AppButtons(
                                           icon: Icons.add,
@@ -140,9 +142,9 @@ class _MyHomePageState extends State<MyHomePage> {
                                           textColor: Colors.white,
                                           backgroundColor: Colors.white,
                                           onTap: () {
-                                            Get.to(()=>ProductAdd());
+                                            Get.to(() => ProductAdd());
                                           },
-                                          text: "Add Bills"),
+                                          text: "Add Product"),
                                       AppButtons(
                                           icon: Icons.history,
                                           iconColor: AppColor.mainColor,
@@ -172,176 +174,344 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   _listBills() {
-    return Positioned(
-      top: 320,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      child: MediaQuery.removePadding(
-        removeTop: true,
-        context: context,
-        child: ListView.builder(
-            itemCount: productController.productData.length,
-            itemBuilder: (_, index) {
-              return Dismissible(
-                key: ValueKey<int>(productController.productData[index].id),
-                onDismissed: (direction) {
-                  if(direction == DismissDirection.endToStart){
-                    productController.getData();
-                  }
-                },
-                direction: DismissDirection.endToStart,
-                confirmDismiss: (direction) async {
-                  return await Get.defaultDialog(
-                      title: "Confirm Delete",
-                      content: const Text("Are you sure you want to delete this item?"),
-                      actions: [
-                        ElevatedButton(onPressed: () {
-                          Navigator.of(context).pop(true);
-                          productController.dbHelper!.deleteHelpData(productController.productData[index].id);
-                        }, child: Text("Delete")),
-                        ElevatedButton(onPressed: () {
-                          Get.back();
-                        }, child: Text("Cancel")),
-
-                      ]
-                  );
-                },
-                child: Container(
-                  margin: const EdgeInsets.only(top: 20, right: 20),
-                  height: 110,
-                  width: MediaQuery.of(context).size.width - 20,
-                  decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.only(
-                          topRight: Radius.circular(30),
-                          bottomRight: Radius.circular(30)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Color(0xFFd8dbe0),
-                          offset: Offset(1, 1),
-                          blurRadius: 20.0,
-                          spreadRadius: 10,
-                        )
-                      ]),
-                  child: Container(
-                    margin: const EdgeInsets.only(top: 10, left: 18),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
+    return Obx(() => Positioned(
+          top: 320,
+          left: 0,
+          right: 0,
+          bottom: 80,
+          child: MediaQuery.removePadding(
+            removeTop: true,
+            context: context,
+            child: ListView.builder(
+                itemCount: productController.productData.length,
+                itemBuilder: (_, index) {
+                  productController.num.value = int.parse("${productController.productData.value[index].quantity}");
+                  productController.productQtyController.text = productController.productData.value[index].quantity;
+                  return Dismissible(
+                    key: ValueKey<int>(productController.productData[index].id),
+                    onDismissed: (direction) {
+                      if (direction == DismissDirection.endToStart) {
+                        productController.getData();
+                      }
+                    },
+                    direction: DismissDirection.endToStart,
+                    confirmDismiss: (direction) async {
+                      return await Get.defaultDialog(
+                          title: "Confirm Delete",
+                          content: const Text(
+                              "Are you sure you want to delete this item?"),
+                          actions: [
+                            ElevatedButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop(true);
+                                  productController.dbHelper!.deleteHelpData(
+                                      productController.productData[index].id);
+                                },
+                                child: Text("Delete")),
+                            ElevatedButton(
+                                onPressed: () {
+                                  Get.back();
+                                },
+                                child: Text("Cancel")),
+                          ]);
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(top: 20, right: 20),
+                      height: 110,
+                      width: MediaQuery.of(context).size.width - 20,
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.only(
+                              topRight: Radius.circular(30),
+                              bottomRight: Radius.circular(30)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Color(0xFFd8dbe0),
+                              offset: Offset(1, 1),
+                              blurRadius: 20.0,
+                              spreadRadius: 10,
+                            )
+                          ]),
+                      child: Container(
+                        margin: const EdgeInsets.only(top: 10, left: 18),
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Container(
-                                  height: 60,
-                                  width: 60,
-                                  decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                        width: 3,
-                                        color: Colors.grey,
-                                      ),
-                                      image: DecorationImage(
-                                          fit: BoxFit.cover,
-                                          image: AssetImage(
-                                              "assets/images/brand1.png"))),
-                                ),
-                                SizedBox(width: 10),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                Row(
                                   children: [
-                                    Text(
-                                      "${productController.productData.value[index].name}",
-
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: AppColor.mainColor,
-                                        fontWeight: FontWeight.w700,
-                                      ),
+                                    Container(
+                                      height: 60,
+                                      width: 60,
+                                      decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          border: Border.all(
+                                            width: 3,
+                                            color: Colors.grey,
+                                          ),
+                                          image: DecorationImage(
+                                              fit: BoxFit.cover,
+                                              image: AssetImage(
+                                                  "assets/images/brand1.png"))),
                                     ),
-                                    SizedBox(height: 10),
-                                    Text(
-                                      "Quantity : ${productController.productData.value[index].quantity}",
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: AppColor.idColor,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    )
+                                    SizedBox(width: 10),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "${productController.productData.value[index].name}",
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: AppColor.mainColor,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        SizedBox(height: 10),
+                                        Text(
+                                          "Quantity : ",
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: AppColor.idColor,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+
+                                        Row(
+                                          children: [
+                                            GestureDetector(
+                                              child: Container(
+                                                margin: EdgeInsets.all(0.0),
+                                                padding: const EdgeInsets.all(4.0),
+                                                decoration: BoxDecoration(
+                                                    border: Border.all(color: Colors.grey),
+                                                    borderRadius: BorderRadius.circular(50)),
+                                                child: Padding(
+                                                  padding: const EdgeInsets.all(2.0),
+                                                  child: Icon(Icons.remove, size: 16),
+                                                ),
+                                              ),
+                                              onTap: () {
+                                                productController
+                                                    .productModel.id =
+                                                    productController.productData
+                                                        .value[index].id;
+                                                productController
+                                                    .productModel.name =
+                                                    productController.productData
+                                                        .value[index].name;
+                                                productController
+                                                    .productModel.quantity =
+                                                    productController.productData
+                                                        .value[index].quantity;
+                                                productController
+                                                    .productModel.price =
+                                                    productController.productData
+                                                        .value[index].price;
+                                                productController
+                                                    .productModel.selected =
+                                                    productController.productData
+                                                        .value[index].selected;
+
+                                                if (int.parse(productController.productData.value[index].quantity) > 1) {
+                                                  productController.productModel.quantity = "${int.parse(productController.productData.value[index].quantity) - 1}";
+                                                }
+                                                productController.dbHelper!
+                                                    .updateProduct(
+                                                    productController
+                                                        .productModel);
+                                                productController.getData();
+
+                                              },
+                                            ),
+                                            SizedBox(width: 8),
+                                            Container(
+                                              width: 55,
+                                              height: 30,
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                border: Border.all(
+                                                    color: Colors.grey,
+                                                    // set border color
+                                                    width: 1.0), // set border width
+                                                borderRadius: BorderRadius.all(
+                                                    Radius.circular(4.0)), // set rounded corner radius
+                                              ),
+                                              child: TextFormField(
+                                                textAlign: TextAlign.center,
+                                                showCursor: false,
+                                                maxLines: 1,
+                                                controller: productController.productQtyController,
+                                                keyboardType: TextInputType.number,
+                                                decoration: InputDecoration(
+                                                  border: InputBorder.none,
+                                                ),
+                                              ),
+                                            ),
+                                            SizedBox(width: 8),
+                                            GestureDetector(
+                                              child: Container(
+                                                padding: const EdgeInsets.all(4.0),
+                                                decoration: BoxDecoration(
+                                                    border: Border.all(color: Colors.grey),
+                                                    borderRadius: BorderRadius.circular(50)),
+                                                child: Padding(
+                                                  padding: const EdgeInsets.all(2.0),
+                                                  child: Icon(Icons.add, size: 16),
+                                                ),
+                                              ),
+                                              onTap: () {
+                                                productController
+                                                    .productModel.id =
+                                                    productController.productData
+                                                        .value[index].id;
+                                                productController
+                                                    .productModel.name =
+                                                    productController.productData
+                                                        .value[index].name;
+                                                productController
+                                                    .productModel.quantity =
+                                                    productController.productData
+                                                        .value[index].quantity;
+                                                productController
+                                                    .productModel.price =
+                                                    productController.productData
+                                                        .value[index].price;
+
+                                                   productController.productModel.quantity = "${int.parse(productController.productData.value[index].quantity) + 1}";
+                                                productController
+                                                    .productModel.selected =
+                                                    productController.productData
+                                                        .value[index].selected;
+
+                                                productController.dbHelper!
+                                                    .updateProduct(
+                                                    productController
+                                                        .productModel);
+                                                productController.getData();
+
+                                              },
+                                            )
+                                          ],
+                                        ),
+                                      ],
+                                    ),
                                   ],
                                 ),
                               ],
                             ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            Row(
                               children: [
-                                Obx(() => Container(
-                                  width: 80,
-                                  height: 30,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(30),
-                                    border: Border.all(
-                                        color: ("${productController.selected}" == "true") ? AppColor.selectBackground : Colors.grey),),
-                                  child: Center(
-                                    child: TextButton(
-                                      child: Text(
-                                          "Select",
-                                          style: TextStyle(
-                                              fontSize: 16,
-                                              color: ("${productController.selected}" == "true") ? AppColor.selectColor : Colors.grey)
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Obx(
+                                      () => Container(
+                                        width: 80,
+                                        height: 30,
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(30),
+                                          border: Border.all(
+                                              color:
+                                                  ("${productController.productData.value[index].selected}" ==
+                                                          "true")
+                                                      ? Colors.orange
+                                                      : Colors.grey),
+                                        ),
+                                        child: Center(
+                                          child: TextButton(
+                                            child: Text("Select",
+                                                style: TextStyle(
+                                                    fontSize: 16,
+                                                    color:
+                                                        ("${productController.productData.value[index].selected}" ==
+                                                                "true")
+                                                            ? Colors.orange
+                                                            : Colors.grey)),
+                                            onPressed: () {
+                                              productController
+                                                      .productModel.id =
+                                                  productController.productData
+                                                      .value[index].id;
+                                              productController
+                                                      .productModel.name =
+                                                  productController.productData
+                                                      .value[index].name;
+                                              productController
+                                                      .productModel.quantity =
+                                                  productController.productData
+                                                      .value[index].quantity;
+                                              productController
+                                                      .productModel.price =
+                                                  productController.productData
+                                                      .value[index].price;
+                                              if (productController.productData
+                                                      .value[index].selected ==
+                                                  "true") {
+                                                productController.productModel
+                                                    .selected = "false";
+                                              } else {
+                                                productController.productModel
+                                                    .selected = "true";
+                                              }
+                                              productController.dbHelper!
+                                                  .updateProduct(
+                                                      productController
+                                                          .productModel);
+                                              productController.getData();
+                                              // productController.onClickMarriedRadioButton(value);
+                                            },
+                                          ),
+                                        ),
                                       ),
-                                      onPressed: () {
-                                        String value = (productController.productData.value[index].selected == "true") ? "false" : "true";
-                                        productController.onClickMarriedRadioButton(value);
-                                      },
                                     ),
-                                  ),
-                                ),),
-                                Expanded(child: Container()),
-                                Text(
-                                  "₹${int.parse(productController.productData.value[index].quantity) * int.parse(productController.productData.value[index].price)}",
-                                  style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w900,
-                                      color: AppColor.mainColor),
+                                    Expanded(child: Container()),
+                                    Text(
+                                      (productController.productData
+                                                  .value[index].quantity ==
+                                              "0")
+                                          ? "₹ ${int.parse(productController.productData.value[index].price)}"
+                                          : "₹ ${int.parse(productController.productData.value[index].quantity) * int.parse(productController.productData.value[index].price)}",
+                                      style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w900,
+                                          color: AppColor.mainColor),
+                                    ),
+                                    Text(
+                                      "Due in 3 Days",
+                                      style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w900,
+                                          color: AppColor.idColor),
+                                    ),
+                                    SizedBox(height: 10)
+                                  ],
                                 ),
-                                Text(
-                                  "Due in 3 Days",
-                                  style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w900,
-                                      color: AppColor.idColor),
-                                ),
-                                SizedBox(height: 10)
+                                SizedBox(width: 5),
+                                Container(
+                                  width: 5,
+                                  height: 35,
+                                  decoration: BoxDecoration(
+                                      color: AppColor.halfOval,
+                                      borderRadius: BorderRadius.only(
+                                        topLeft: Radius.circular(30),
+                                        bottomLeft: Radius.circular(30),
+                                      )),
+                                )
                               ],
-                            ),
-                            SizedBox(width: 5),
-                            Container(
-                              width: 5,
-                              height: 35,
-                              decoration: BoxDecoration(
-                                  color: AppColor.halfOval,
-                                  borderRadius: BorderRadius.only(
-                                    topLeft: Radius.circular(30),
-                                    bottomLeft: Radius.circular(30),
-                                  )),
                             )
                           ],
-                        )
-                      ],
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              );
-            }),
-      ),
-    );
+                  );
+                }),
+          ),
+        ));
   }
 
   _payButton() {
@@ -352,9 +522,7 @@ class _MyHomePageState extends State<MyHomePage> {
             textColor: Colors.white,
             onTap: () {
               Get.to(() => PaymentPage());
-            }
-            )
-            );
+            }));
   }
 
   _textContainer() {

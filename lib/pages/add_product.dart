@@ -33,6 +33,7 @@ class _ProductAddState extends State<ProductAdd> {
     double h = MediaQuery.of(context).size.height;
     double w = MediaQuery.of(context).size.width;
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: AppColor.backGroundColor,
       body: Container(
         height: h,
@@ -174,7 +175,7 @@ class _ProductAddState extends State<ProductAdd> {
           left: 0,
           top: 100,
           child: Text(
-            "Add",
+            "Add\nProduct",
             style: TextStyle(
               fontSize: 70,
               fontWeight: FontWeight.bold,
@@ -185,7 +186,7 @@ class _ProductAddState extends State<ProductAdd> {
           left: 40,
           top: 80,
           child: Text(
-            "Add",
+            "Add\nProduct",
             style: TextStyle(
               fontSize: 50,
               fontWeight: FontWeight.bold,
@@ -243,34 +244,6 @@ class _ProductAddState extends State<ProductAdd> {
                 SizedBox(
                   height: 50,
                   child: TextFormField(
-                    maxLength: 10,
-                    controller: productController.qtyCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      counterText: '',
-                      focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide:
-                          const BorderSide(color: Colors.red, width: 2)),
-                      enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Colors.black54)),
-                      labelText: "Quantity",
-                    ),
-                    onSaved: (value) {
-                      productController.productModel.quantity = value;
-                    },
-                    validator: (value) {
-                      return productController.validateQuantity(value!);
-                    },
-                  ),
-                ),
-                const SizedBox(
-                  height: 20,
-                ),
-                SizedBox(
-                  height: 50,
-                  child: TextFormField(
                     controller: productController.priceCtrl,
                     keyboardType: TextInputType.name,
                     decoration: InputDecoration(
@@ -315,6 +288,7 @@ class _ProductAddState extends State<ProductAdd> {
                 form.save();
                 // productController.isSelected.value = false;
                 productController.productModel.selected = "false";
+                productController.productModel.quantity = "1";
                 await productController.dbHelper!.insertProduct(productController.productModel);
                 form.reset();
                 productController.nameCtrl.clear();

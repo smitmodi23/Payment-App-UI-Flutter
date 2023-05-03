@@ -36,11 +36,16 @@ class AppButtons extends StatelessWidget {
             ),
             child:Icon(icon,size: 30, color: iconColor,),
           ),
-          text!=null?Text(
-            text!,
-            style: TextStyle(
-              fontSize:14,
-              color: textColor,
+          text!=null?Container(
+            width: 50,
+            child: FittedBox(
+              child: Text(
+                text!,
+                style: TextStyle(
+                  fontSize:14,
+                  color: textColor,
+                ),
+              ),
             ),
           ):Container()
         ],
