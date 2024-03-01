@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_payment_app/controller/product_add_controller.dart';
-import 'package:flutter_payment_app/db_helper/dbHelper.dart';
-import 'package:flutter_payment_app/pages/my_home_page.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../component/colors.dart';
+import '../controller/product_add_controller.dart';
 import '../widgets/buttons.dart';
 import '../widgets/large_buttons.dart';
-import 'add_customer.dart';
+import 'my_home_page.dart';
 
-class ProductAdd extends StatefulWidget {
-  ProductAdd({Key? key}) : super(key: key);
+class AddCustomer extends StatefulWidget {
+  const AddCustomer({Key? key}) : super(key: key);
 
   @override
-  State<ProductAdd> createState() => _ProductAddState();
+  State<AddCustomer> createState() => _AddCustomerState();
 }
 
-class _ProductAddState extends State<ProductAdd> {
+class _AddCustomerState extends State<AddCustomer> {
+
   final scaffoldKey = GlobalKey<ScaffoldState>();
   final formKey = GlobalKey<FormState>();
   final ProductController productController = Get.put(ProductController());
@@ -24,12 +24,13 @@ class _ProductAddState extends State<ProductAdd> {
   @override
   void initState() {
     super.initState();
-    productController.dbHelper = DatabaseHelper.instance;
+    checkUser();
   }
 
   @override
   Widget build(BuildContext context) {
     double h = MediaQuery.of(context).size.height;
+
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: AppColor.backGroundColor,
@@ -45,7 +46,6 @@ class _ProductAddState extends State<ProductAdd> {
       ),
     );
   }
-
   _headSection() {
     return Container(
         height: 310,
@@ -58,7 +58,6 @@ class _ProductAddState extends State<ProductAdd> {
           ],
         ));
   }
-
   _mainBackground() {
     return Positioned(
         bottom: 10,
@@ -86,7 +85,6 @@ class _ProductAddState extends State<ProductAdd> {
                   image: AssetImage("assets/images/curve.png"))),
         ));
   }
-
   _buttonContainer() {
     return Positioned(
         bottom: 10,
@@ -115,7 +113,7 @@ class _ProductAddState extends State<ProductAdd> {
                             right: 45,
                             child: Container(
                                 padding:
-                                    const EdgeInsets.only(top: 8, bottom: 25),
+                                const EdgeInsets.only(top: 8, bottom: 25),
                                 width: 60,
                                 height: 250,
                                 decoration: BoxDecoration(
@@ -124,7 +122,7 @@ class _ProductAddState extends State<ProductAdd> {
                                 ),
                                 child: Column(
                                     mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                    MainAxisAlignment.spaceBetween,
                                     children: [
                                       AppButtons(
                                           icon: Icons.cancel,
@@ -139,22 +137,15 @@ class _ProductAddState extends State<ProductAdd> {
                                           iconColor: AppColor.mainColor,
                                           textColor: Colors.white,
                                           backgroundColor: Colors.white,
-                                          onTap: () {
-                                            Get.back();
-                                            Get.back();
-                                          },
+                                          onTap: () {},
                                           text: "Add Bills"),
                                       AppButtons(
-                                          icon: Icons.person,
+                                          icon: Icons.history,
                                           iconColor: AppColor.mainColor,
                                           textColor: Colors.white,
                                           backgroundColor: Colors.white,
-                                          onTap: () {
-                                            Get.back();
-                                            Get.back();
-                                            Get.to(() => AddCustomer());
-                                          },
-                                          text: "Add Customer")
+                                          onTap: () {},
+                                          text: "History")
                                     ])))
                       ]));
                 });
@@ -182,7 +173,7 @@ class _ProductAddState extends State<ProductAdd> {
           left: 0,
           top: 100,
           child: Text(
-            "Add\nProduct",
+            "Add\nCustomer",
             style: TextStyle(
               fontSize: 70,
               fontWeight: FontWeight.bold,
@@ -193,7 +184,7 @@ class _ProductAddState extends State<ProductAdd> {
           left: 40,
           top: 80,
           child: Text(
-            "Add\nProduct",
+            "Add\nCustomer",
             style: TextStyle(
               fontSize: 50,
               fontWeight: FontWeight.bold,
@@ -226,108 +217,77 @@ class _ProductAddState extends State<ProductAdd> {
                   SizedBox(
                     height: 50,
                     child: TextFormField(
-                      controller: productController.nameCtrl,
-                      textInputAction: TextInputAction.next,
+                      controller: productController.customerCtrl,
                       decoration: InputDecoration(
                         focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                             borderSide:
-                                const BorderSide(color: Colors.red, width: 2)),
+                            const BorderSide(color: Colors.red, width: 2)),
                         enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                                const BorderSide(color: Colors.black54)),
+                            borderSide: const BorderSide(color: Colors.black54)),
                         errorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: const BorderSide(color: Colors.red),
                         ),
-                        labelText: "Product Name",
+
+                        labelText: "Customer Name",
                       ),
                       onSaved: (value) {
-                        productController.productModel.name = value;
+                        saveData(value);
                       },
                       validator: (value) {
-                        return productController.validateName(value!);
+                        return productController.validateCustomer(value!);
                       },
                     ),
                   ),
-                  const SizedBox(
-                    height: 20,
-                  ),
-                  SizedBox(
-                    height: 50,
-                    child: TextFormField(
-                      controller: productController.priceCtrl,
-                      textInputAction: TextInputAction.done,
-                      keyboardType: TextInputType.number,
-                      // inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      decoration: InputDecoration(
-                        focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                                const BorderSide(color: Colors.red, width: 2)),
-                        enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                                const BorderSide(color: Colors.black54)),
-                        errorBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Colors.red),
-                        ),
-                        labelText: "Price",
-                      ),
-                      onSaved: (value) {
-                        productController.productModel.price = value;
-                      },
-                      validator: (value) {
-                        return productController.validatePrice(value!);
-                      },
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 20,
-                  ),
+
                 ],
               ),
             ),
-          )),
+          )
+      ),
     );
   }
 
   _payButton() {
     return Positioned(
         bottom: 10,
-        child: Obx(
-          () => AppLargeButtons(
-              text: productController.isEdit.value ? "Edit" : "Add Product",
-              textColor: Colors.white,
-              onTap: () async {
-                var form = formKey.currentState;
-                if (form!.validate()) {
-                  form.save();
-                  productController.productModel.selected = "false";
-                  productController.productModel.quantity = "1";
-                  productController.productModel.totalPrice =
-                      productController.priceCtrl.text;
+        child: AppLargeButtons(
+            text: "Add Customer",
+            textColor: Colors.white,
+            onTap: () async{
+              var form = formKey.currentState;
+              if(form!.validate()){
+                form.save();
+                // productController.isSelected.value = false;
+                form.reset();
+                productController.customerCtrl.clear();
+                Get.offAll(()=>MyHomePage());
+                print("success");
+              }else{
+                print("error");
+              }
 
-                  if (productController.productModel.id != null) {
-                    await productController.dbHelper!
-                        .updateProduct(productController.productModel);
-                  } else {
-                    await productController.dbHelper!
-                        .insertProduct(productController.productModel);
-                  }
-                  form.reset();
-                  productController.nameCtrl.clear();
-                  productController.qtyCtrl.clear();
-                  productController.priceCtrl.clear();
-                  Get.offAll(() => MyHomePage());
-                  print("success");
-                } else {
-                  print("error");
-                }
-
-              }),
-        ));
+              // Get.to(() => MyHomePage());
+            }
+        )
+    );
   }
+
+  void saveData(String? value) async{
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString("name", value!);
+  }
+
+  void checkUser() async{
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? name = prefs.getString("name");
+    if(name != null){
+      productController.customerCtrl.text = name;
+    }else{
+      productController.customerCtrl.text = "";
+    }
+  }
+
 }

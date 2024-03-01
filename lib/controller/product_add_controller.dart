@@ -9,14 +9,20 @@ class ProductController extends GetxController {
   late TextEditingController qtyCtrl = TextEditingController();
   late TextEditingController priceCtrl = TextEditingController();
   late TextEditingController productQtyController = TextEditingController();
+  late TextEditingController customerCtrl = TextEditingController();
 
   var selected = "false".obs;
   var isSelected = false.obs;
+  RxBool isEdit = false.obs;
   DatabaseHelper? dbHelper;
-  final ProductModel productModel = ProductModel();
+  ProductModel productModel = ProductModel();
   RxList productData = [].obs;
   RxList billData = [].obs;
-  var num = 0.obs;
+  // var num = 0.obs;
+  var totalPrice = 0.obs;
+  var total = 0.obs;
+  var totalPriceList = [].obs;
+  var isTotal = false.obs;
 
 
   @override
@@ -26,8 +32,8 @@ class ProductController extends GetxController {
     nameCtrl = TextEditingController();
     qtyCtrl = TextEditingController();
     priceCtrl = TextEditingController();
+    customerCtrl = TextEditingController();
     productQtyController = TextEditingController();
-    productQtyController.text = num.toString();
   }
 
   @override
@@ -36,10 +42,19 @@ class ProductController extends GetxController {
     nameCtrl.dispose();
     qtyCtrl.dispose();
     priceCtrl.dispose();
+    customerCtrl.dispose();
     productQtyController.dispose();
   }
 
+
   String? validateName(String value) {
+    if (value == "" && value.isEmpty) {
+      return "Enter Product Name";
+    }
+    return null;
+  }
+
+  String? validateCustomer(String value) {
     if (value == "" && value.isEmpty) {
       return "Enter Product Name";
     }
@@ -63,27 +78,43 @@ class ProductController extends GetxController {
   void getData() async {
     List<ProductModel> x = await dbHelper!.getProductData();
       productData.value = x;
-      print(productData.value);
   }
 
   void getBill() async{
     await dbHelper!.getProductBill("true").then((value){
-      if(value != null){
+      if(value.isNotEmpty){
         billData.value = value;
       }
     });
-
-    print(billData.value);
   }
 
-  void increment() {
-    num += 1;
-  }
+  // void increment() {
+  //   num += 1;
+  // }
+  //
+  // void decrement() {
+  //   num -= 1;
+  // }
 
-  void decrement() {
-    num -= 1;
+  void quantityAddRemove(int index, int type){
+    productModel.id = productData[index].id;
+    productModel.name = productData[index].name;
+    productModel.quantity = productData[index].quantity;
+    productModel.price = productData[index].price;
+    productModel.totalPrice = productData[index].totalPrice;
+    if(type == 1) {
+      if(num.parse(productData[index].quantity) > 1){
+        productModel.quantity = "${num.parse(productData[index].quantity) - 1}";
+      }
+    }else if(type == 2){
+      productModel.quantity = "${num.parse(productData[index].quantity) + 1}";
+    }else if(type == 3){
+      productModel.quantity = qtyCtrl.text;
+    }
+    productModel.selected = "false";
+    dbHelper!.updateProduct(productModel);
+    getData();
   }
-
 
   void onClickMarriedRadioButton(value) {
     selected.value = value;

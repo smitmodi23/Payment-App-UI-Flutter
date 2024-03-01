@@ -21,25 +21,23 @@ dependencies:
   email_validator: ^2.1.17
   get: ^4.6.5
   sqflite: any
-  path_provider: any
   shared_preferences: ^2.0.20
+  screenshot: ^2.1.0
+  share_plus: ^6.3.4
+  path_provider: ^2.0.14
+  permission_handler: ^10.2.0
+  pdf: ^3.10.1
+
 
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
-# For information on the generic Dart part of this file, see the
-# following page: https://dart.dev/tools/pub/pubspec
 
-# The following section is specific to Flutter.
 flutter:
 
-  # The following line ensures that the Material Icons font is
-  # included with your application, so that you can use the icons in
-  # the material Icons class.
   uses-material-design: true
 
-  # To add assets to your application, add an assets section, like this:
   assets:
     - assets/images/

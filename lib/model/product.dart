@@ -4,12 +4,14 @@ class ProductModel {
   static const colName = 'name';
   static const colQty = 'quantity';
   static const colPrice = 'price';
+  static const colTotalPrice = 'totalPrice';
   static const colSelected = 'selected';
 
   int? id;
   String? name;
   String? quantity;
   String? price;
+  String? totalPrice;
   String? selected;
 
   ProductModel(
@@ -17,6 +19,7 @@ class ProductModel {
         this.name,
         this.quantity,
         this.price,
+        this.totalPrice,
         this.selected
       });
 
@@ -25,6 +28,7 @@ class ProductModel {
     name = map['name'];
     quantity = map['quantity'];
     price = map['price'];
+    totalPrice = map['totalPrice'];
     selected = map['selected'];
   }
 
@@ -33,6 +37,7 @@ class ProductModel {
       colName: name,
       colQty: quantity,
       colPrice: price,
+      colTotalPrice: totalPrice,
       colSelected: selected
     };
     if (id != null) {

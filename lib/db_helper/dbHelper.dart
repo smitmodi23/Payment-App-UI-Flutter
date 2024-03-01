@@ -35,21 +35,11 @@ class DatabaseHelper {
       ${ProductModel.colName} TEXT NOT NULL,
       ${ProductModel.colQty} TEXT NOT NULL,
       ${ProductModel.colPrice} TEXT NOT NULL,
+      ${ProductModel.colTotalPrice} TEXT NOT NULL,
       ${ProductModel.colSelected} TEXT NOT NULL
       )
     ''');
     print("Create table");
-    // await db.execute('''
-    // CREATE TABLE ${HelpCenterModel.tblHelpCenter}(
-    // ${HelpCenterModel.colID} INTEGER PRIMARY KEY AUTOINCREMENT,
-    //   ${HelpCenterModel.colName} TEXT NOT NULL,
-    //   ${HelpCenterModel.colPhone} TEXT NOT NULL,
-    //   ${HelpCenterModel.colDesignation} TEXT NOT NULL,
-    //   ${HelpCenterModel.colCity} TEXT NOT NULL,
-    //   ${HelpCenterModel.colZone} TEXT NOT NULL
-    //   )
-    // ''');
-    // print("Create table");
 
   }
 
@@ -72,10 +62,6 @@ class DatabaseHelper {
       return res.map((e) => ProductModel.fromMap(e)).toList();
     }
     return [];
-    // if (res.isNotEmpty) {
-    //   return ProductModel.fromMap(res.first);
-    // }
-    // return null;
   }
 
   Future<List<ProductModel>> getProductData() async {
