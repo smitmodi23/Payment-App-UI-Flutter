@@ -334,7 +334,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                                 image: DecorationImage(
                                                     fit: BoxFit.cover,
                                                     image: AssetImage(
-                                                        "assets/images/brand1.png"))),
+                                                        "assets/images/brand1.jpeg"))),
                                           ),
                                           SizedBox(width: 10),
                                           Column(
