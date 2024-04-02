@@ -1,5 +1,6 @@
 import 'dart:io';
-
+import 'dart:typed_data';
+import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
 import 'package:flutter_payment_app/component/colors.dart';
 import 'package:flutter_payment_app/pages/my_home_page.dart';
@@ -9,6 +10,7 @@ import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:permission_handler/permission_handler.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -27,7 +29,7 @@ class _PaymentPageState extends State<PaymentPage> {
   final ProductController productController = Get.put(ProductController());
   ScreenshotController screenshotController = ScreenshotController();
 
-
+  String existingFilePath = '';
 
   @override
   void initState() {
@@ -37,6 +39,7 @@ class _PaymentPageState extends State<PaymentPage> {
     productController.total.value = 0;
     productController.totalPrice.value = 0;
     productController.totalPriceList.clear();
+    getDownloadExistingFile();
   }
 
   @override
@@ -46,32 +49,38 @@ class _PaymentPageState extends State<PaymentPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
-          children: [
-          Obx(() =>  (productController.billData.length !=0)
-                ? Screenshot(
-              controller: screenshotController,
-              child: Container(
-                  padding: const EdgeInsets.only(top: 80, left: 20, right: 20),
-                  height: MediaQuery.of(context).size.height,
-                  width: MediaQuery.of(context).size.width,
-                  decoration: BoxDecoration(
-                      image: DecorationImage(
-                          fit: BoxFit.fill,
-                          image:
-                              AssetImage("assets/images/paymentbackground.jpg"))),
-                  child: Column(children: [
-                    SizedBox(height: h * 0.159),
-                    Row(
-                      children: [
-                        SizedBox(width: 21,),
-                        Text(widget.name,style: TextStyle(fontSize: 16),),
-                      ],
-                    ),
-                    SizedBox(height: h * 0.131),
-                    Container(
-                      height: 175,
-                      width: 305,
-                      child: MediaQuery.removePadding(
+        children: [
+          Obx(() => (productController.billData.length != 0)
+              ? Screenshot(
+                  controller: screenshotController,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.only(top: 80, left: 20, right: 20),
+                    height: MediaQuery.of(context).size.height,
+                    width: MediaQuery.of(context).size.width,
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                            fit: BoxFit.fill,
+                            image: AssetImage(
+                                "assets/images/paymentbackground.jpg"))),
+                    child: Column(children: [
+                      SizedBox(height: h * 0.159),
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 21,
+                          ),
+                          Text(
+                            widget.name,
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: h * 0.131),
+                      Container(
+                        height: 175,
+                        width: 305,
+                        child: MediaQuery.removePadding(
                           removeTop: true,
                           context: context,
                           child: ListView.builder(
@@ -82,7 +91,8 @@ class _PaymentPageState extends State<PaymentPage> {
                                     children: [
                                       Row(children: [
                                         Container(
-                                            margin: const EdgeInsets.only(left: 10),
+                                            margin:
+                                                const EdgeInsets.only(left: 10),
                                             width: 20,
                                             height: 20,
                                             child: Center(
@@ -90,11 +100,13 @@ class _PaymentPageState extends State<PaymentPage> {
                                                     "${productController.billData[index].quantity}",
                                                     style: TextStyle(
                                                       fontSize: 11,
-                                                      fontWeight: FontWeight.w900,
+                                                      fontWeight:
+                                                          FontWeight.w900,
                                                       color: Colors.black,
                                                     )))),
                                         Container(
-                                          margin: const EdgeInsets.only(left: 10),
+                                          margin:
+                                              const EdgeInsets.only(left: 10),
                                           width: 100,
                                           height: 20,
                                           alignment: Alignment.centerLeft,
@@ -122,72 +134,80 @@ class _PaymentPageState extends State<PaymentPage> {
                                     ],
                                   ),
                                 );
-
                               }),
                         ),
                       ),
-                    totalPrice(),
-                  ]),
-              ),
-
-            )
-                : Center(child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.network("https://img.freepik.com/free-vector/no-data-concept-illustration_114360-536.jpg?w=2000"),
-                    Text("No Product Selected Yet"),
-                  ],
-                ),))
-            ,
-            Obx(
-              () => Positioned(
-                top: 470,
-                child: (productController.billData.length != 0)
-                    ? Column(
+                      totalPrice(),
+                    ]),
+                  ),
+                )
+              : Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      SizedBox(height: h * 0.16),
-                      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                        AppButtons(
-                            icon: Icons.share_sharp,
-                            onTap: () {
-                              screenToPdf();
-                            },
-                            text: "Share"),
-                      ]),
-                      SizedBox(height: h * 0.02),
-                      AppLargeButtons(
-                          text: "Done",
-                          backgroundColor: Colors.white,
-                          textColor: AppColor.mainColor,
-                          onTap: () {
-                            Get.offAll(() => MyHomePage());
-                          })
+                      Image.network(
+                          "https://img.freepik.com/free-vector/no-data-concept-illustration_114360-536.jpg?w=2000"),
+                      Text("No Product Selected Yet"),
                     ],
-                  )
-                    : Column(
-                        children: [
-                          SizedBox(height: h * 0.25),
-                          AppLargeButtons(
-                          text: "Select Product",
-                          backgroundColor: Colors.white,
-                          textColor: AppColor.mainColor,
-                          onTap: () {
-                            Get.offAll(() => MyHomePage());
-                          }),
-                        ],
-                      ),
-              ),
-            )
-          ],
-        ),
-
+                  ),
+                )),
+          Obx(
+            () => Positioned(
+              top: 470,
+              child: (productController.billData.length != 0)
+                  ? Column(
+                      children: [
+                        SizedBox(height: h * 0.16),
+                        Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              AppButtons(
+                                  icon: Icons.share_sharp,
+                                  onTap: () {
+                                    screenToPdf("Share");
+                                  },
+                                  text: "Share"),
+                              SizedBox(width: h * 0.04),
+                              AppButtons(
+                                  icon: Icons.download_outlined,
+                                  onTap: () {
+                                    screenToPdf("Save");
+                                    // await saveFile();
+                                  },
+                                  text: "Print"),
+                            ]),
+                        SizedBox(height: h * 0.02),
+                        AppLargeButtons(
+                            text: "Done",
+                            backgroundColor: Colors.white,
+                            textColor: AppColor.mainColor,
+                            onTap: () {
+                              Get.offAll(() => MyHomePage());
+                            })
+                      ],
+                    )
+                  : Column(
+                      children: [
+                        SizedBox(height: h * 0.25),
+                        AppLargeButtons(
+                            text: "Select Product",
+                            backgroundColor: Colors.white,
+                            textColor: AppColor.mainColor,
+                            onTap: () {
+                              Get.offAll(() => MyHomePage());
+                            }),
+                      ],
+                    ),
+            ),
+          )
+        ],
+      ),
     );
   }
-
-  Future screenToPdf() async {
+  Future screenToPdf(String fileType) async {
     final screenShot = await screenshotController.capture();
     pw.Document pdf = pw.Document();
-    String fileName = "myFile";
+    String fileName = "Invoice${DateTime.now().millisecond}.pdf";
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.legal,
@@ -198,10 +218,34 @@ class _PaymentPageState extends State<PaymentPage> {
         },
       ),
     );
-    String path = (await getTemporaryDirectory()).path;
-    File pdfFile = await File('$path/$fileName.pdf').create();
-    await pdfFile.writeAsBytes(await pdf.save());
-    await Share.shareFiles([pdfFile.path]);
+    final savePath = path.join(existingFilePath, '$fileName');
+    if (await Permission.storage.request().isGranted) {
+      File pdfFile = await File(savePath).create();
+      await pdfFile.writeAsBytes(await pdf.save());
+      if (fileType == "Share") {
+        await Share.shareFiles([pdfFile.path]);
+      } else {
+        File fileDef = File(pdfFile.path);
+        await fileDef.create(recursive: true);
+        Uint8List bytes = await pdfFile.readAsBytes();
+        await fileDef.writeAsBytes(bytes).then((value) {
+          Get.snackbar("File Downloaded", "File Download in $value",
+              snackPosition: SnackPosition.BOTTOM);
+        });
+      }
+    }
+  }
+
+  getDownloadExistingFile() async {
+    Directory? directory = Directory('/storage/emulated/0/Download');
+    if (!await directory.exists()) {
+      if (Platform.isAndroid) {
+        directory = await getExternalStorageDirectory();
+      } else if (Platform.isIOS) {
+        directory = await getApplicationDocumentsDirectory();
+      }
+    }
+    existingFilePath = directory!.absolute.path;
   }
 
   totalPrice() {
