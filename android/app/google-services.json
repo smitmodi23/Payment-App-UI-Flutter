@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "579661229223",
+    "project_id": "spmbill",
+    "storage_bucket": "spmbill.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:579661229223:android:30ef48265ba41d2293bf82",
+        "android_client_info": {
+          "package_name": "com.example.flutter_payment_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDI_EwcZzOc1lX_vvX8Te9sdN6TzaKqoIw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
