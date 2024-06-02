@@ -7,7 +7,7 @@ class ProductModel {
   static const colTotalPrice = 'totalPrice';
   static const colSelected = 'selected';
 
-  int? id;
+  String? id;
   String? name;
   String? quantity;
   String? price;

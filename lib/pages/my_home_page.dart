@@ -209,7 +209,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           Get.to(() => ProductAdd());
                         },
                         child: Dismissible(
-                          key: ValueKey<int>(
+                          key: ValueKey<String>(
                               productController.productData[index].id),
                           onDismissed: (direction) {
                             if (direction == DismissDirection.endToStart) {
@@ -262,9 +262,10 @@ class _MyHomePageState extends State<MyHomePage> {
                                     ElevatedButton(
                                         onPressed: () {
                                           Navigator.of(context).pop(true);
-                                          productController.dbHelper!
-                                              .deleteHelpData(productController
-                                                  .productData[index].id);
+                                          // productController.dbHelper!
+                                          //     .deleteHelpData(productController
+                                          //         .productData[index].id);
+                                          productController.deleteProduct(productController.productData[index].id);
                                         },
                                         child: Text("Delete")),
                                     ElevatedButton(
@@ -324,17 +325,19 @@ class _MyHomePageState extends State<MyHomePage> {
                                           Container(
                                             height: 60,
                                             width: 60,
+                                            alignment: Alignment.center,
                                             decoration: BoxDecoration(
                                                 borderRadius:
                                                     BorderRadius.circular(10),
                                                 border: Border.all(
                                                   width: 3,
                                                   color: Colors.grey,
-                                                ),
-                                                image: DecorationImage(
-                                                    fit: BoxFit.cover,
-                                                    image: AssetImage(
-                                                        "assets/images/brand1.jpeg"))),
+                                                ),),
+                                                // image: DecorationImage(
+                                                //     fit: BoxFit.cover,
+                                                //     image: AssetImage(
+                                                //         "assets/images/brand1.jpeg"))),
+                                            child: Text("${productController.productData[index].name[0]}",)
                                           ),
                                           SizedBox(width: 10),
                                           Column(
@@ -577,7 +580,9 @@ class _MyHomePageState extends State<MyHomePage> {
                                                     } else {
                                                       productController.productModel.selected = "true";
                                                     }
-                                                    productController.dbHelper!.updateProduct(productController.productModel);productController.getData();
+                                                    productController.updateProduct(productController.productModel);
+                                                    // productController.dbHelper!.updateProduct(productController.productModel);
+                                                    productController.getData();
                                                     // productController.onClickMarriedRadioButton(value);
                                                   },
                                                 ),

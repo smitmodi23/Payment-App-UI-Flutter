@@ -311,11 +311,13 @@ class _ProductAddState extends State<ProductAdd> {
                       productController.priceCtrl.text;
 
                   if (productController.productModel.id != null) {
-                    await productController.dbHelper!
-                        .updateProduct(productController.productModel);
+                    productController.updateProduct(productController.productModel);
+                    // await productController.dbHelper!
+                    //     .updateProduct(productController.productModel);
                   } else {
-                    await productController.dbHelper!
-                        .insertProduct(productController.productModel);
+                    // await productController.dbHelper!
+                        // .insertProduct(productController.productModel);
+                    productController.addDBProduct(productController.productModel);
                   }
                   form.reset();
                   productController.nameCtrl.clear();
