@@ -1,159 +1,243 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_payment_app/model/product.dart';
 import 'package:get/get.dart';
 
-import '../db_helper/dbHelper.dart';
+import 'package:flutter_payment_app/model/product.dart';
 
 class ProductController extends GetxController {
-  late TextEditingController nameCtrl = TextEditingController();
-  late TextEditingController qtyCtrl = TextEditingController();
-  late TextEditingController priceCtrl = TextEditingController();
-  late TextEditingController productQtyController = TextEditingController();
-  late TextEditingController customerCtrl = TextEditingController();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  var selected = "false".obs;
-  var isSelected = false.obs;
-  RxBool isEdit = false.obs;
-  DatabaseHelper? dbHelper;
+  // Text Controllers
+  final TextEditingController nameCtrl = TextEditingController();
+  final TextEditingController qtyCtrl = TextEditingController();
+  final TextEditingController priceCtrl = TextEditingController();
+  final TextEditingController customerCtrl = TextEditingController();
+
+  // Database
+  CollectionReference<Map<String, dynamic>> get _products =>
+      _firestore.collection('products');
+
+  // Reactive State
+  final RxBool isEdit = false.obs;
+
+  final RxList<ProductModel> productData = <ProductModel>[].obs;
+  final RxList<ProductModel> billData = <ProductModel>[].obs;
+
   ProductModel productModel = ProductModel();
-  RxList productData = [].obs;
-  RxList billData = [].obs;
-
-  // var num = 0.obs;
-  var totalPrice = 0.obs;
-  var total = 0.obs;
-  var totalPriceList = [].obs;
-  var isTotal = false.obs;
 
   @override
   void onInit() {
     super.onInit();
-
-    nameCtrl = TextEditingController();
-    qtyCtrl = TextEditingController();
-    priceCtrl = TextEditingController();
-    customerCtrl = TextEditingController();
-    productQtyController = TextEditingController();
+    getData();
   }
 
   @override
   void onClose() {
-    super.onClose();
     nameCtrl.dispose();
     qtyCtrl.dispose();
     priceCtrl.dispose();
     customerCtrl.dispose();
-    productQtyController.dispose();
+
+    super.onClose();
   }
 
+  // ---------------- VALIDATION ----------------
+
   String? validateName(String value) {
-    if (value == "" && value.isEmpty) {
-      return "Enter Product Name";
+    if (value.trim().isEmpty) {
+      return 'Enter Product Name';
     }
     return null;
   }
 
   String? validateCustomer(String value) {
-    if (value == "" && value.isEmpty) {
-      return "Enter Product Name";
+    if (value.trim().isEmpty) {
+      return 'Enter Customer Name';
     }
     return null;
   }
 
   String? validateQuantity(String value) {
-    if (value == "0") {
-      return "Add Quantity";
+    final quantity = int.tryParse(value.trim());
+
+    if (quantity == null || quantity <= 0) {
+      return 'Enter a valid quantity';
     }
+
     return null;
   }
 
   String? validatePrice(String value) {
-    if (value == "" && value.isEmpty) {
-      return "Enter Price";
+    final price = double.tryParse(value.trim());
+
+    if (price == null || price <= 0) {
+      return 'Enter a valid price';
     }
+
     return null;
   }
 
-  Stream<List<ProductModel>> readProduct() => FirebaseFirestore.instance
-      .collection('users')
-      .snapshots()
-      .map((snapshot) => snapshot.docs
-          .map((doc) => ProductModel.fromMap(doc.data()))
-          .toList());
+  // ---------------- FIRESTORE STREAM ----------------
 
-  void getData() async {
-    // Get a snapshot of the 'product' collection
-    QuerySnapshot snapshot =
-        await FirebaseFirestore.instance.collection('products').get();
-
-    // Map each document in the snapshot to a ProductModel object and return the list
-    List<ProductModel> x = snapshot.docs.map((doc) {
-      return ProductModel.fromMap(doc.data() as Map<String, dynamic>);
-    }).toList();
-    productData.value = x;
+  Stream<List<ProductModel>> readProduct() {
+    return _products.snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return ProductModel.fromMap({...doc.data(), 'id': doc.id});
+      }).toList();
+    });
   }
 
-  void getBill() async {
-    QuerySnapshot snapshot = await FirebaseFirestore.instance
-        .collection('products')
-        .where('selected', isEqualTo: "true")
-        .get();
+  // ---------------- GET PRODUCTS ----------------
 
-    List<ProductModel> products = snapshot.docs.map((doc) {
-      return ProductModel.fromMap(doc.data() as Map<String, dynamic>);
-    }).toList();
-      billData.value = products;
-  }
+  Future<void> getData() async {
+    try {
+      final snapshot = await _products.get();
 
-  void quantityAddRemove(int index, int type) {
-    productModel.id = productData[index].id;
-    productModel.name = productData[index].name;
-    productModel.quantity = productData[index].quantity;
-    productModel.price = productData[index].price;
-    productModel.totalPrice = productData[index].totalPrice;
-    if (type == 1) {
-      if (num.parse(productData[index].quantity) > 1) {
-        productModel.quantity = "${num.parse(productData[index].quantity) - 1}";
-      }
-    } else if (type == 2) {
-      productModel.quantity = "${num.parse(productData[index].quantity) + 1}";
-    } else if (type == 3) {
-      productModel.quantity = qtyCtrl.text;
+      final products = snapshot.docs.map((doc) {
+        return ProductModel.fromMap({...doc.data(), 'id': doc.id});
+      }).toList();
+
+      productData.assignAll(products);
+    } catch (e, stackTrace) {
+      debugPrint('Get Products Error: $e');
+      debugPrintStack(stackTrace: stackTrace);
+      rethrow;
     }
-    productModel.selected = "false";
-    // dbHelper!.updateProduct(productModel);
-    updateProduct(productModel);
-    getData();
   }
 
-  void onClickMarriedRadioButton(value) {
-    selected.value = value;
-    update();
+  // ---------------- GET SELECTED BILL ----------------
+
+  Future<void> getBill() async {
+    try {
+      final snapshot = await _products
+          .where('selected', isEqualTo: 'true')
+          .get();
+
+      final products = snapshot.docs.map((doc) {
+        return ProductModel.fromMap({...doc.data(), 'id': doc.id});
+      }).toList();
+
+      billData.assignAll(products);
+    } catch (e, stackTrace) {
+      debugPrint('Get Bill Error: $e');
+      debugPrintStack(stackTrace: stackTrace);
+      rethrow;
+    }
   }
 
-  Future deleteProduct(String id) async {
-    await FirebaseFirestore.instance
-        .collection('products')
-        .doc(id)
-        .delete();
+  // ---------------- ADD PRODUCT ----------------
 
-    getData();
+  Future<void> addDBProduct(ProductModel product) async {
+    try {
+      final doc = _products.doc();
+
+      product.id = doc.id;
+
+      await doc.set(product.toMap());
+
+      productData.add(product);
+    } catch (e, stackTrace) {
+      debugPrint('Add Product Error: $e');
+      debugPrintStack(stackTrace: stackTrace);
+      rethrow;
+    }
   }
 
-  Future addDBProduct(ProductModel productModel) async {
-    final docUser = FirebaseFirestore.instance.collection('products').doc();
-    productModel.id = docUser.id;
+  // ---------------- UPDATE PRODUCT ----------------
 
-    final json = productModel.toMap();
-    await docUser.set(json);
+  Future<void> updateProduct(ProductModel product) async {
+    try {
+      final id = product.id;
+
+      if (id == null || id.isEmpty) {
+        throw Exception('Product ID is missing');
+      }
+
+      await _products.doc(id).update(product.toMap());
+
+      final index = productData.indexWhere((item) => item.id == id);
+
+      if (index != -1) {
+        productData[index] = product;
+      }
+
+      final billIndex = billData.indexWhere((item) => item.id == id);
+
+      if (billIndex != -1) {
+        if (product.selected == 'true') {
+          billData[billIndex] = product;
+        } else {
+          billData.removeAt(billIndex);
+        }
+      }
+    } catch (e, stackTrace) {
+      debugPrint('Update Product Error: $e');
+      debugPrintStack(stackTrace: stackTrace);
+      rethrow;
+    }
   }
 
-  Future updateProduct(ProductModel productModel) async {
-    final docUser =
-        FirebaseFirestore.instance.collection('products').doc(productModel.id);
+  // ---------------- DELETE PRODUCT ----------------
 
-    final json = productModel.toMap();
-    await docUser.update(json);
+  Future<void> deleteProduct(String? id) async {
+    try {
+      await _products.doc(id).delete();
+
+      productData.removeWhere((item) => item.id == id);
+      billData.removeWhere((item) => item.id == id);
+    } catch (e, stackTrace) {
+      debugPrint('Delete Product Error: $e');
+      debugPrintStack(stackTrace: stackTrace);
+      rethrow;
+    }
+  }
+
+  // ---------------- QUANTITY UPDATE ----------------
+
+  Future<void> quantityAddRemove(int index, int type) async {
+    if (index < 0 || index >= productData.length) return;
+
+    final currentProduct = productData[index];
+
+    final currentQuantity = int.tryParse(currentProduct.quantity ?? '0') ?? 0;
+
+    int newQuantity;
+
+    switch (type) {
+      case 1:
+        if (currentQuantity <= 1) return;
+        newQuantity = currentQuantity - 1;
+        break;
+
+      case 2:
+        newQuantity = currentQuantity + 1;
+        break;
+
+      case 3:
+        final enteredQuantity = int.tryParse(qtyCtrl.text.trim());
+
+        if (enteredQuantity == null || enteredQuantity <= 0) {
+          return;
+        }
+
+        newQuantity = enteredQuantity;
+        break;
+
+      default:
+        return;
+    }
+
+    final updatedProduct = ProductModel()
+      ..id = currentProduct.id
+      ..name = currentProduct.name
+      ..price = currentProduct.price
+      ..quantity = newQuantity.toString()
+      ..totalPrice = currentProduct.totalPrice
+      ..selected = 'false';
+
+    await updateProduct(updatedProduct);
+
+    // Clear selection after quantity modification.
+    qtyCtrl.clear();
   }
 }

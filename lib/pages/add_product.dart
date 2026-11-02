@@ -1,335 +1,441 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_payment_app/controller/product_add_controller.dart';
-import 'package:flutter_payment_app/db_helper/dbHelper.dart';
 import 'package:flutter_payment_app/pages/my_home_page.dart';
 import 'package:get/get.dart';
 
 import '../component/colors.dart';
-import '../widgets/buttons.dart';
 import '../widgets/large_buttons.dart';
 import 'add_customer.dart';
 
 class ProductAdd extends StatefulWidget {
-  ProductAdd({Key? key}) : super(key: key);
+  const ProductAdd({Key? key}) : super(key: key);
 
   @override
   State<ProductAdd> createState() => _ProductAddState();
 }
 
 class _ProductAddState extends State<ProductAdd> {
-  final scaffoldKey = GlobalKey<ScaffoldState>();
   final formKey = GlobalKey<FormState>();
-  final ProductController productController = Get.put(ProductController());
+
+  late final ProductController productController;
 
   @override
   void initState() {
     super.initState();
-    productController.dbHelper = DatabaseHelper.instance;
+
+    productController = Get.isRegistered<ProductController>()
+        ? Get.find<ProductController>()
+        : Get.put(ProductController());
   }
 
   @override
   Widget build(BuildContext context) {
-    double h = MediaQuery.of(context).size.height;
     return Scaffold(
-      resizeToAvoidBottomInset: false,
-      backgroundColor: AppColor.backGroundColor,
-      body: Container(
-        height: h,
-        child: Stack(
+      backgroundColor: const Color(0xFFF5F7FB),
+      resizeToAvoidBottomInset: true,
+      body: SafeArea(
+        child: Column(
           children: [
-            _headSection(),
-            _listBills(),
-            _payButton(),
+            _buildHeader(),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+                child: _buildForm(),
+              ),
+            ),
           ],
+        ),
+      ),
+      bottomNavigationBar: SafeArea(child: _buildBottomButton()),
+    );
+  }
+
+  // Header
+  Widget _buildHeader() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(22, 18, 18, 28),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF243B55), Color(0xFF141E30)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _headerIcon(
+                icon: Icons.arrow_back_rounded,
+                onTap: () => Get.back(),
+              ),
+              const Spacer(),
+              _headerIcon(
+                icon: Icons.more_horiz_rounded,
+                onTap: _showQuickActions,
+              ),
+            ],
+          ),
+          const SizedBox(height: 28),
+          Obx(() {
+            final isEdit = productController.isEdit.value;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isEdit ? 'UPDATE PRODUCT' : 'NEW PRODUCT',
+                  style: const TextStyle(
+                    color: Color(0xFFB8C7D9),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 2,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  isEdit ? 'Edit Product' : 'Add Product',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  isEdit
+                      ? 'Update your product details below.'
+                      : 'Add product details to create a new bill.',
+                  style: const TextStyle(
+                    color: Color(0xFFD0D9E5),
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _headerIcon({required IconData icon, required VoidCallback onTap}) {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(13),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(13),
+        child: SizedBox(
+          height: 44,
+          width: 44,
+          child: Icon(icon, color: Colors.white, size: 22),
         ),
       ),
     );
   }
 
-  _headSection() {
-    return Container(
-        height: 310,
-        child: Stack(
-          children: [
-            _mainBackground(),
-            _curveImageContainer(),
-            _buttonContainer(),
-            _textContainer(),
-          ],
-        ));
-  }
-
-  _mainBackground() {
-    return Positioned(
-        bottom: 10,
-        left: 0,
-        child: Container(
-          height: 300,
-          width: MediaQuery.of(context).size.width,
-          decoration: BoxDecoration(
-              image: DecorationImage(
-                  fit: BoxFit.cover,
-                  image: AssetImage("assets/images/background.png"))),
-        ));
-  }
-
-  _curveImageContainer() {
-    return Positioned(
-        left: 0,
-        right: -2,
-        bottom: 10,
-        child: Container(
-          height: MediaQuery.of(context).size.height * 0.1,
-          decoration: BoxDecoration(
-              image: DecorationImage(
-                  fit: BoxFit.cover,
-                  image: AssetImage("assets/images/curve.png"))),
-        ));
-  }
-
-  _buttonContainer() {
-    return Positioned(
-        bottom: 10,
-        right: 45,
-        child: GestureDetector(
-          onTap: () {
-            showModalBottomSheet<dynamic>(
-                isScrollControlled: true,
-                barrierColor: Colors.transparent,
-                backgroundColor: Colors.transparent,
-                context: context,
-                builder: (BuildContext bc) {
-                  return Container(
-                      height: MediaQuery.of(context).size.height - 240,
-                      child: Stack(children: [
-                        Positioned(
-                          bottom: 0,
-                          child: Container(
-                            color: Color(0xFFeef1f4).withOpacity(0.7),
-                            width: MediaQuery.of(context).size.width,
-                            height: MediaQuery.of(context).size.height - 300,
-                          ),
-                        ),
-                        Positioned(
-                            top: 0,
-                            right: 45,
-                            child: Container(
-                                padding:
-                                    const EdgeInsets.only(top: 8, bottom: 25),
-                                width: 60,
-                                height: 250,
-                                decoration: BoxDecoration(
-                                  color: AppColor.mainColor,
-                                  borderRadius: BorderRadius.circular(29),
-                                ),
-                                child: Column(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      AppButtons(
-                                          icon: Icons.cancel,
-                                          iconColor: AppColor.mainColor,
-                                          textColor: Colors.white,
-                                          backgroundColor: Colors.white,
-                                          onTap: () {
-                                            Navigator.pop(context);
-                                          }),
-                                      AppButtons(
-                                          icon: Icons.add,
-                                          iconColor: AppColor.mainColor,
-                                          textColor: Colors.white,
-                                          backgroundColor: Colors.white,
-                                          onTap: () {
-                                            Get.back();
-                                            Get.back();
-                                          },
-                                          text: "Add Bills"),
-                                      AppButtons(
-                                          icon: Icons.person,
-                                          iconColor: AppColor.mainColor,
-                                          textColor: Colors.white,
-                                          backgroundColor: Colors.white,
-                                          onTap: () {
-                                            Get.back();
-                                            Get.back();
-                                            Get.to(() => AddCustomer());
-                                          },
-                                          text: "Add Customer")
-                                    ])))
-                      ]));
-                });
-          },
-          child: Container(
-              height: 60,
-              width: 60,
-              decoration: BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage("assets/images/lines.png"),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      blurRadius: 15,
-                      offset: Offset(0, 1),
-                      color: Color(0xFF11324D).withOpacity(0.2),
-                    )
-                  ])),
-        ));
-  }
-
-  _textContainer() {
-    return Stack(children: [
-      Positioned(
-          left: 0,
-          top: 100,
-          child: Text(
-            "Add\nProduct",
+  // Form
+  Widget _buildForm() {
+    return Form(
+      key: formKey,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Product Information',
             style: TextStyle(
-              fontSize: 70,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF293952),
+              color: Color(0xFF243247),
             ),
-          )),
-      Positioned(
-          left: 40,
-          top: 80,
-          child: Text(
-            "Add\nProduct",
-            style: TextStyle(
-              fontSize: 50,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          )),
-    ]);
-  }
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Enter the basic details of your product.',
+            style: TextStyle(color: Color(0xFF8491A3), fontSize: 13),
+          ),
+          const SizedBox(height: 24),
 
-  _listBills() {
-    return Positioned(
-      top: 320,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      child: MediaQuery.removePadding(
-          removeTop: true,
-          context: context,
-          child: Form(
-            key: formKey,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  SizedBox(
-                    height: 50,
-                    child: TextFormField(
-                      controller: productController.nameCtrl,
-                      textInputAction: TextInputAction.next,
-                      decoration: InputDecoration(
-                        focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                                const BorderSide(color: Colors.red, width: 2)),
-                        enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                                const BorderSide(color: Colors.black54)),
-                        errorBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Colors.red),
-                        ),
-                        labelText: "Product Name",
-                      ),
-                      onSaved: (value) {
-                        productController.productModel.name = value;
-                      },
-                      validator: (value) {
-                        return productController.validateName(value!);
-                      },
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 20,
-                  ),
-                  SizedBox(
-                    height: 50,
-                    child: TextFormField(
-                      controller: productController.priceCtrl,
-                      textInputAction: TextInputAction.done,
-                      keyboardType: TextInputType.number,
-                      // inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      decoration: InputDecoration(
-                        focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                                const BorderSide(color: Colors.red, width: 2)),
-                        enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                                const BorderSide(color: Colors.black54)),
-                        errorBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Colors.red),
-                        ),
-                        labelText: "Price",
-                      ),
-                      onSaved: (value) {
-                        productController.productModel.price = value;
-                      },
-                      validator: (value) {
-                        return productController.validatePrice(value!);
-                      },
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 20,
-                  ),
-                ],
-              ),
+          _buildInputLabel('Product Name'),
+          const SizedBox(height: 9),
+          TextFormField(
+            controller: productController.nameCtrl,
+            textCapitalization: TextCapitalization.words,
+            textInputAction: TextInputAction.next,
+            decoration: _inputDecoration(
+              hint: 'Enter product name',
+              icon: Icons.inventory_2_outlined,
             ),
-          )),
+            onSaved: (value) {
+              productController.productModel.name = value?.trim();
+            },
+            validator: (value) {
+              return productController.validateName(value ?? '');
+            },
+          ),
+
+          const SizedBox(height: 22),
+
+          _buildInputLabel('Product Price'),
+          const SizedBox(height: 9),
+          TextFormField(
+            controller: productController.priceCtrl,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            textInputAction: TextInputAction.done,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+            ],
+            decoration: _inputDecoration(
+              hint: 'Enter product price',
+              icon: Icons.currency_rupee_rounded,
+              prefixText: '₹ ',
+            ),
+            onSaved: (value) {
+              productController.productModel.price = value?.trim();
+            },
+            validator: (value) {
+              return productController.validatePrice(value ?? '');
+            },
+          ),
+
+          const SizedBox(height: 28),
+
+          _buildInfoCard(),
+        ],
+      ),
     );
   }
 
-  _payButton() {
-    return Positioned(
-        bottom: 10,
-        child: Obx(
-          () => AppLargeButtons(
-              text: productController.isEdit.value ? "Edit" : "Add Product",
-              textColor: Colors.white,
-              onTap: () async {
-                var form = formKey.currentState;
-                if (form!.validate()) {
-                  form.save();
-                  productController.productModel.selected = "false";
-                  productController.productModel.quantity = "1";
-                  productController.productModel.totalPrice =
-                      productController.priceCtrl.text;
+  Widget _buildInputLabel(String label) {
+    return Text(
+      label,
+      style: const TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFF344256),
+      ),
+    );
+  }
 
-                  if (productController.productModel.id != null) {
-                    productController.updateProduct(productController.productModel);
-                    // await productController.dbHelper!
-                    //     .updateProduct(productController.productModel);
-                  } else {
-                    // await productController.dbHelper!
-                        // .insertProduct(productController.productModel);
-                    productController.addDBProduct(productController.productModel);
-                  }
-                  form.reset();
-                  productController.nameCtrl.clear();
-                  productController.qtyCtrl.clear();
-                  productController.priceCtrl.clear();
-                  Get.offAll(() => MyHomePage());
-                  print("success");
-                } else {
-                  print("error");
-                }
+  InputDecoration _inputDecoration({
+    required String hint,
+    required IconData icon,
+    String? prefixText,
+  }) {
+    return InputDecoration(
+      hintText: hint,
+      prefixText: prefixText,
+      prefixIcon: Icon(icon, color: AppColor.mainColor, size: 21),
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      hintStyle: const TextStyle(color: Color(0xFFA0AABA), fontSize: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: const BorderSide(color: Color(0xFFE5EAF0)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: const BorderSide(color: Color(0xFFE5EAF0)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: BorderSide(color: AppColor.mainColor, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: const BorderSide(color: Colors.redAccent),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
+      ),
+    );
+  }
 
-              }),
-        ));
+  Widget _buildInfoCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF2FF),
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.lightbulb_outline_rounded, color: Color(0xFF3974C6)),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Make sure the product name and price are correct. '
+              'You can edit product details later.',
+              style: TextStyle(
+                color: Color(0xFF45658F),
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Bottom action
+  Widget _buildBottomButton() {
+    return Obx(() {
+      final isEdit = productController.isEdit.value;
+
+      return Container(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 15,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        child: AppLargeButtons(
+          text: isEdit ? 'Update Product' : 'Add Product',
+          height: 56,
+          borderRadius: 15,
+          fontSize: 16,
+          margin: EdgeInsets.zero,
+          textColor: Colors.white,
+          backgroundColor: AppColor.mainColor,
+          onTap: _saveProduct,
+        ),
+      );
+    });
+  }
+
+  // Save product
+  void _saveProduct() {
+    FocusScope.of(context).unfocus();
+
+    final form = formKey.currentState;
+
+    if (form == null || !form.validate()) return;
+
+    form.save();
+
+    final product = productController.productModel;
+
+    product.selected = 'false';
+    product.quantity = '1';
+    product.totalPrice = productController.priceCtrl.text.trim();
+
+    if (product.id != null) {
+      productController.updateProduct(product);
+    } else {
+      productController.addDBProduct(product);
+    }
+
+    _clearForm();
+
+    Get.offAll(() => const MyHomePage());
+  }
+
+  void _clearForm() {
+    formKey.currentState?.reset();
+
+    productController.nameCtrl.clear();
+    productController.priceCtrl.clear();
+    productController.qtyCtrl.clear();
+  }
+
+  // Quick actions
+  void _showQuickActions() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return Container(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 42,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const SizedBox(height: 22),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Quick Actions',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+              const SizedBox(height: 16),
+              _quickActionTile(
+                icon: Icons.receipt_long_rounded,
+                title: 'Add Bills',
+                subtitle: 'Go back to your product list',
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  Get.back();
+                },
+              ),
+              _quickActionTile(
+                icon: Icons.person_add_alt_1_rounded,
+                title: 'Add Customer',
+                subtitle: 'Create a new customer',
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  Get.back();
+                  Get.to(() => AddCustomer());
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _quickActionTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 5),
+      leading: Container(
+        height: 46,
+        width: 46,
+        decoration: BoxDecoration(
+          color: AppColor.mainColor.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(13),
+        ),
+        child: Icon(icon, color: AppColor.mainColor),
+      ),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+      subtitle: Text(subtitle),
+      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 15),
+      onTap: onTap,
+    );
   }
 }

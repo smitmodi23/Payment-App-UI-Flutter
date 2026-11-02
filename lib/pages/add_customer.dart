@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:get/get.dart';
 
 import '../component/colors.dart';
 import '../controller/product_add_controller.dart';
-import '../widgets/buttons.dart';
 import '../widgets/large_buttons.dart';
 import 'my_home_page.dart';
 
@@ -16,278 +15,406 @@ class AddCustomer extends StatefulWidget {
 }
 
 class _AddCustomerState extends State<AddCustomer> {
-
-  final scaffoldKey = GlobalKey<ScaffoldState>();
   final formKey = GlobalKey<FormState>();
-  final ProductController productController = Get.put(ProductController());
+
+  late final ProductController productController;
+
+  bool isSaving = false;
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    checkUser();
+
+    productController = Get.isRegistered<ProductController>()
+        ? Get.find<ProductController>()
+        : Get.put(ProductController());
+
+    _loadCustomer();
   }
 
   @override
   Widget build(BuildContext context) {
-    double h = MediaQuery.of(context).size.height;
-
     return Scaffold(
-      resizeToAvoidBottomInset: false,
       backgroundColor: AppColor.backGroundColor,
-      body: Container(
-        height: h,
-        child: Stack(
+      resizeToAvoidBottomInset: true,
+      body: SafeArea(
+        child: Column(
           children: [
-            _headSection(),
-            _listBills(),
-            _payButton(),
+            _buildHeader(),
+            Expanded(
+              child: SingleChildScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+                child: _buildForm(),
+              ),
+            ),
           ],
+        ),
+      ),
+      bottomNavigationBar: SafeArea(child: _buildBottomButton()),
+    );
+  }
+
+  // Header - Same as ProductAdd
+  Widget _buildHeader() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(22, 18, 18, 28),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF243B55), Color(0xFF141E30)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _headerIcon(
+                icon: Icons.arrow_back_rounded,
+                onTap: () => Get.back(),
+              ),
+              const Spacer(),
+              _headerIcon(
+                icon: Icons.more_horiz_rounded,
+                onTap: _showQuickActions,
+              ),
+            ],
+          ),
+          const SizedBox(height: 28),
+          const Text(
+            'CUSTOMER DETAILS',
+            style: TextStyle(
+              color: Color(0xFFB8C7D9),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 2,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Add Customer',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 30,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Enter customer details to continue.',
+            style: TextStyle(color: Color(0xFFD0D9E5), fontSize: 14),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _headerIcon({required IconData icon, required VoidCallback onTap}) {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(13),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(13),
+        child: SizedBox(
+          height: 44,
+          width: 44,
+          child: Icon(icon, color: Colors.white, size: 22),
         ),
       ),
     );
   }
-  _headSection() {
-    return Container(
-        height: 310,
-        child: Stack(
-          children: [
-            _mainBackground(),
-            _curveImageContainer(),
-            _buttonContainer(),
-            _textContainer(),
-          ],
-        ));
-  }
-  _mainBackground() {
-    return Positioned(
-        bottom: 10,
-        left: 0,
-        child: Container(
-          height: 300,
-          width: MediaQuery.of(context).size.width,
-          decoration: BoxDecoration(
-              image: DecorationImage(
-                  fit: BoxFit.cover,
-                  image: AssetImage("assets/images/background.png"))),
-        ));
-  }
 
-  _curveImageContainer() {
-    return Positioned(
-        left: 0,
-        right: -2,
-        bottom: 10,
-        child: Container(
-          height: MediaQuery.of(context).size.height * 0.1,
-          decoration: BoxDecoration(
-              image: DecorationImage(
-                  fit: BoxFit.cover,
-                  image: AssetImage("assets/images/curve.png"))),
-        ));
-  }
-  _buttonContainer() {
-    return Positioned(
-        bottom: 10,
-        right: 45,
-        child: GestureDetector(
-          onTap: () {
-            showModalBottomSheet<dynamic>(
-                isScrollControlled: true,
-                barrierColor: Colors.transparent,
-                backgroundColor: Colors.transparent,
-                context: context,
-                builder: (BuildContext bc) {
-                  return Container(
-                      height: MediaQuery.of(context).size.height - 240,
-                      child: Stack(children: [
-                        Positioned(
-                          bottom: 0,
-                          child: Container(
-                            color: Color(0xFFeef1f4).withOpacity(0.7),
-                            width: MediaQuery.of(context).size.width,
-                            height: MediaQuery.of(context).size.height - 300,
-                          ),
-                        ),
-                        Positioned(
-                            top: 0,
-                            right: 45,
-                            child: Container(
-                                padding:
-                                const EdgeInsets.only(top: 8, bottom: 25),
-                                width: 60,
-                                height: 250,
-                                decoration: BoxDecoration(
-                                  color: AppColor.mainColor,
-                                  borderRadius: BorderRadius.circular(29),
-                                ),
-                                child: Column(
-                                    mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      AppButtons(
-                                          icon: Icons.cancel,
-                                          iconColor: AppColor.mainColor,
-                                          textColor: Colors.white,
-                                          backgroundColor: Colors.white,
-                                          onTap: () {
-                                            Navigator.pop(context);
-                                          }),
-                                      AppButtons(
-                                          icon: Icons.add,
-                                          iconColor: AppColor.mainColor,
-                                          textColor: Colors.white,
-                                          backgroundColor: Colors.white,
-                                          onTap: () {},
-                                          text: "Add Bills"),
-                                      AppButtons(
-                                          icon: Icons.history,
-                                          iconColor: AppColor.mainColor,
-                                          textColor: Colors.white,
-                                          backgroundColor: Colors.white,
-                                          onTap: () {},
-                                          text: "History")
-                                    ])))
-                      ]));
-                });
-          },
-          child: Container(
-              height: 60,
-              width: 60,
-              decoration: BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage("assets/images/lines.png"),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      blurRadius: 15,
-                      offset: Offset(0, 1),
-                      color: Color(0xFF11324D).withOpacity(0.2),
-                    )
-                  ])),
-        ));
-  }
-
-  _textContainer() {
-    return Stack(children: [
-      Positioned(
-          left: 0,
-          top: 100,
-          child: Text(
-            "Add\nCustomer",
+  // Customer Form
+  Widget _buildForm() {
+    return Form(
+      key: formKey,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Customer Information',
             style: TextStyle(
-              fontSize: 70,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF293952),
+              color: Color(0xFF243247),
             ),
-          )),
-      Positioned(
-          left: 40,
-          top: 80,
-          child: Text(
-            "Add\nCustomer",
-            style: TextStyle(
-              fontSize: 50,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Enter the basic details of your customer.',
+            style: TextStyle(color: Color(0xFF8491A3), fontSize: 13),
+          ),
+          const SizedBox(height: 24),
+
+          _buildInputLabel('Customer Name'),
+          const SizedBox(height: 9),
+
+          TextFormField(
+            controller: productController.customerCtrl,
+            enabled: !isLoading,
+            textCapitalization: TextCapitalization.words,
+            textInputAction: TextInputAction.done,
+            decoration: _inputDecoration(
+              hint: 'Enter customer name',
+              icon: Icons.person_outline_rounded,
             ),
-          )),
-    ]);
-  }
+            validator: (value) {
+              return productController.validateCustomer(value?.trim() ?? '');
+            },
+          ),
 
-  _listBills() {
-    return Positioned(
-      top: 320,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      child: MediaQuery.removePadding(
-          removeTop: true,
-          context: context,
-          child: Form(
-            key: formKey,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  SizedBox(
-                    height: 50,
-                    child: TextFormField(
-                      controller: productController.customerCtrl,
-                      decoration: InputDecoration(
-                        focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                            const BorderSide(color: Colors.red, width: 2)),
-                        enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: Colors.black54)),
-                        errorBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Colors.red),
-                        ),
+          const SizedBox(height: 28),
 
-                        labelText: "Customer Name",
-                      ),
-                      onSaved: (value) {
-                        saveData(value);
-                      },
-                      validator: (value) {
-                        return productController.validateCustomer(value!);
-                      },
-                    ),
-                  ),
-
-                ],
-              ),
-            ),
-          )
+          _buildInfoCard(),
+        ],
       ),
     );
   }
 
-  _payButton() {
-    return Positioned(
-        bottom: 10,
-        child: AppLargeButtons(
-            text: "Add Customer",
-            textColor: Colors.white,
-            onTap: () async{
-              var form = formKey.currentState;
-              if(form!.validate()){
-                form.save();
-                // productController.isSelected.value = false;
-                form.reset();
-                productController.customerCtrl.clear();
-                Get.offAll(()=>MyHomePage());
-                print("success");
-              }else{
-                print("error");
-              }
-
-              // Get.to(() => MyHomePage());
-            }
-        )
+  Widget _buildInputLabel(String label) {
+    return Text(
+      label,
+      style: const TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFF344256),
+      ),
     );
   }
 
-  void saveData(String? value) async{
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setString("name", value!);
+  InputDecoration _inputDecoration({
+    required String hint,
+    required IconData icon,
+  }) {
+    return InputDecoration(
+      hintText: hint,
+      prefixIcon: Icon(icon, color: AppColor.mainColor, size: 21),
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      hintStyle: const TextStyle(color: Color(0xFFA0AABA), fontSize: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: const BorderSide(color: Color(0xFFE5EAF0)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: const BorderSide(color: Color(0xFFE5EAF0)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: BorderSide(color: AppColor.mainColor, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: const BorderSide(color: Colors.redAccent),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
+      ),
+    );
   }
 
-  void checkUser() async{
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? name = prefs.getString("name");
-    if(name != null){
-      productController.customerCtrl.text = name;
-    }else{
-      productController.customerCtrl.text = "";
+  Widget _buildInfoCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF2FF),
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.lightbulb_outline_rounded, color: Color(0xFF3974C6)),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Customer name will be saved for your invoice. '
+              'You can update it whenever required.',
+              style: TextStyle(
+                color: Color(0xFF45658F),
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Bottom Button - Same as ProductAdd
+  Widget _buildBottomButton() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 15,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: AppLargeButtons(
+        text: isSaving ? 'Saving...' : 'Add Customer',
+        height: 56,
+        borderRadius: 15,
+        fontSize: 16,
+        margin: EdgeInsets.zero,
+        textColor: Colors.white,
+        backgroundColor: AppColor.mainColor,
+        onTap: isSaving || isLoading ? null : _saveCustomer,
+      ),
+    );
+  }
+
+  // Load saved customer
+  Future<void> _loadCustomer() async {
+    final prefs = await SharedPreferences.getInstance();
+    final name = prefs.getString('name') ?? '';
+
+    if (!mounted) return;
+
+    productController.customerCtrl.text = name;
+
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  // Save customer
+  Future<void> _saveCustomer() async {
+    FocusScope.of(context).unfocus();
+
+    if (isSaving) return;
+
+    final form = formKey.currentState;
+
+    if (form == null || !form.validate()) return;
+
+    final name = productController.customerCtrl.text.trim();
+
+    setState(() {
+      isSaving = true;
+    });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('name', name);
+
+      if (!mounted) return;
+
+      Get.offAll(() => const MyHomePage());
+    } catch (e) {
+      if (mounted) {
+        Get.snackbar(
+          'Error',
+          'Unable to save customer details.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isSaving = false;
+        });
+      }
     }
   }
 
+  // Quick Actions
+  void _showQuickActions() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return Container(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 42,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const SizedBox(height: 22),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Quick Actions',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _quickActionTile(
+                icon: Icons.receipt_long_rounded,
+                title: 'Add Bills',
+                subtitle: 'Go back to product list',
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  Get.offAll(() => const MyHomePage());
+                },
+              ),
+              _quickActionTile(
+                icon: Icons.history_rounded,
+                title: 'History',
+                subtitle: 'View previous bills',
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  Get.snackbar(
+                    'History',
+                    'History screen is not connected yet.',
+                    snackPosition: SnackPosition.BOTTOM,
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _quickActionTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 5),
+      leading: Container(
+        height: 46,
+        width: 46,
+        decoration: BoxDecoration(
+          color: AppColor.mainColor.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(13),
+        ),
+        child: Icon(icon, color: AppColor.mainColor),
+      ),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+      subtitle: Text(subtitle),
+      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 15),
+      onTap: onTap,
+    );
+  }
 }
