@@ -225,6 +225,7 @@ class _PaymentPageState extends State<PaymentPage> {
               Expanded(
                 child: Container(
                   height: 28,
+                  alignment: Alignment.centerLeft,
                   decoration: const BoxDecoration(
                     border: Border(bottom: BorderSide(color: Colors.black54)),
                   ),
